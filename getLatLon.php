@@ -1,8 +1,10 @@
 <?php
-//this app seeks to first check if the lon and lat already exist, if not then it queries the google API 
+//this app seeks to first check if the lon and lat already exist, if not then it queries the API 
 
 
 // function to get  the address
+
+//use GOOGLE API
 function get_lat_long($address){
     $latlon = [];
 
@@ -22,6 +24,7 @@ function get_lat_long($address){
     return $latlon;
 }
 
+//use BING API
 function get_lat_long_m($address){
     $latlon = [];
 
@@ -42,6 +45,37 @@ function get_lat_long_m($address){
     return $latlon;
 }
 
+//This saves an key_value array into another array
+function array_push_multi_assoc($array, $key, $value)
+{
+  $array[$key] = $value;
+  return $array;
+}
 
+//This is the 
+function getValuesFromDB()
+{
+  $tempValues = [];
+  $values = $this->getAllValues();//this gets all the values from the database
 
+  foreach ($values as $value) {
+    //add hospital claims to an associative array
+    if (empty($value['lon']) || empty($value['lat'])) {
 
+      $latlon = $this->get_lat_long($value['address']); // You can also use BING API
+      array_push($latlon, $value['name']);
+      updateDBValues($latlon[0], $latlon[1], $value['id']);
+      $tempValues = $this->array_push_multi_assoc($tempValues, $value['description'], $latlon);
+    } else {
+      $tempValues = $this->array_push_multi_assoc($tempValues, $value['description'], [$value['lat'], $value['lon'], $value['name']]);
+    }
+  }
+
+  return $tempValues;
+}
+
+function updateDBValues($lat, $lon, $id)
+{
+  $query = "UPDATE DBColumn SET lat = $lat, lon = $lon WHERE id = '$id'";
+  return 0;//return 1 for successful execution of the query result;
+}
